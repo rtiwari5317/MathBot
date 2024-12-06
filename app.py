@@ -14,12 +14,12 @@ from langchain.callbacks import StreamlitCallbackHandler
 st.set_page_config(page_title="Math Problem Solver",page_icon="🧮")
 st.title("Your Personal Maths Problems Solver")
 
-groq_api_key=st.sidebar.text_input(label="Groq API Key",type="password")
+# groq_api_key=st.sidebar.text_input(label="Groq API Key",type="password")
 
 
-if not groq_api_key:
-    st.info("Please add your Groq API key to continue")
-    st.stop()
+# if not groq_api_key:
+#     st.info("Please add your Groq API key to continue")
+#     st.stop()
 
 llm=ChatGroq(model="Gemma2-9b-It",groq_api_key=groq_api_key)
 
