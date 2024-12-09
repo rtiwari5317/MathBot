@@ -10,7 +10,7 @@ from langchain.callbacks import StreamlitCallbackHandler
 
 # response = requests.get('http://localhost:8501', verify=False)
 
-## Set upi the Stramlit app
+## Set up the Streamlit app
 st.set_page_config(page_title="Math Problem Solver",page_icon="🧮")
 st.title("Your Personal Maths Problems Solver")
 
@@ -21,7 +21,7 @@ st.title("Your Personal Maths Problems Solver")
 #     st.info("Please add your Groq API key to continue")
 #     st.stop()
 
-llm=ChatGroq(model="Gemma2-9b-It",groq_api_key=groq_api_key)
+llm=ChatGroq(model="Gemma2-9b-It",groq_api_key=st.secrets['groq_api_key'])
 
 
 ## Initializing the tools
