@@ -1,16 +1,19 @@
 import streamlit as st
+import os
 from langchain_groq import ChatGroq
-from langchain.chains import LLMMathChain, LLMChain
+from langchain.chains import LLMMathChain, LLMChain, RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain_community.utilities import WikipediaAPIWrapper
 from langchain.agents.agent_types import AgentType
 from langchain.agents import Tool, initialize_agent
 from langchain.callbacks import StreamlitCallbackHandler
-# import requests
+from utils.loadVectorStore import load_vectorstore
+from dotenv import load_dotenv
+load_dotenv(dotenv_path='app.env')
 
-# response = requests.get('http://localhost:8501', verify=False)
 
-## Set up the Streamlit app
+
+## Set upi the Stramlit app
 st.set_page_config(page_title="Math Problem Solver",page_icon="🧮")
 st.title("Your Personal Maths Problems Solver")
 
@@ -22,7 +25,7 @@ st.title("Your Personal Maths Problems Solver")
 #     st.stop()
 
 llm=ChatGroq(model="Gemma2-9b-It",groq_api_key=st.secrets['groq_api_key'])
-
+# llm=ChatGroq(model="Gemma2-9b-It",groq_api_key=os.getenv("GROQ_API_KEY"))
 
 ## Initializing the tools
 wikipedia_wrapper=WikipediaAPIWrapper()
@@ -38,14 +41,31 @@ math_chain=LLMMathChain.from_llm(llm=llm)
 calculator=Tool(
     name="Calculator",
     func=math_chain.run,
-    description="A tool for answering math related questions. Only input mathematical expression need to bed provided"
+    description="Use this tool ONLY for direct mathematical calculations or expressions (e.g., '2+2', 'sqrt(16)') and share solutions as well." \
+    " Do NOT use for algebraic equations or word problems."
+)
+
+
+#Loading the VectorStore here:
+vectorstore_path = './Maths_Datasets/pdf_vectorstore'
+vectorstore = load_vectorstore(vectorstore_path, allow_dangerous_deserialization=True)
+retriever = vectorstore.as_retriever()
+
+#Custom Trained Tool on NCERT Maths Books:
+qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
+
+custom_data_tool = Tool(
+    name="Custom Data MathBot",
+    func=lambda q: qa_chain.run(q),
+    description="Use this tool for questions that are related to the content of the uploaded NCERT Maths PDFs, including step-by-step solutions and explanations."
 )
 
 prompt="""
-You are a agent tasked for solving users mathematical questions. Logically arrive at the solution and provide a 
-detailed explanation with step by step solution for the question below
+You are a agent tasked for solving users mathematical questions. Provide a 
+detailed explanation with step by step solution for the question below using any of the tools provided:
 Question:{question}
 Answer:
+
 """
 
 prompt_template=PromptTemplate(
@@ -59,12 +79,13 @@ chain=LLMChain(llm=llm,prompt=prompt_template)
 reasoning_tool=Tool(
     name="Reasoning tool",
     func=chain.run,
-    description="A tool for answering your Maths elementary level questions."
+    description="Use this tool for elementary-level math word problems that require reasoning, but not direct calculation or retrieval from PDFs."
 )
 
 #Initialize the agents
 assistant_agent=initialize_agent(
-    tools=[wikipedia_tool,calculator,reasoning_tool],
+    # tools=[wikipedia_tool,calculator,reasoning_tool,custom_data_tool],
+    tools=[custom_data_tool],
     llm=llm,
     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
     verbose=False,
@@ -81,6 +102,19 @@ for msg in st.session_state.messages:
 
 ## Lets start the interaction
 question=st.text_area("Enter your question:","").replace("?","")
+st.markdown(
+    """
+    <style>
+    textarea {
+        font-size: 2rem !important;
+    }
+    input {
+        font-size: 2rem !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 if st.button("Get Answer"):
     if question:
@@ -89,20 +123,10 @@ if st.button("Get Answer"):
             st.chat_message("user").write(question)
 
             st_cb=StreamlitCallbackHandler(st.container(),expand_new_thoughts=False)
-            response=assistant_agent.run(st.session_state.messages,callbacks=[st_cb]
-                                         )
+            response=assistant_agent.run(st.session_state.messages,callbacks=[st_cb])
             st.session_state.messages.append({'role':'assistant',"content":response})
             st.write('# Response:')
             st.success(response)
 
     else:
         st.warning("Please enter the question?")
-
-
-
-
-
-
-
-
-
