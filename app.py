@@ -84,8 +84,8 @@ reasoning_tool=Tool(
 
 #Initialize the agents
 assistant_agent=initialize_agent(
-    # tools=[wikipedia_tool,calculator,reasoning_tool,custom_data_tool],
-    tools=[custom_data_tool],
+    tools=[wikipedia_tool,calculator,reasoning_tool,custom_data_tool],
+    # tools=[custom_data_tool],
     llm=llm,
     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
     verbose=False,
