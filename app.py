@@ -48,7 +48,7 @@ calculator=Tool(
 
 #Loading the VectorStore here:
 vectorstore_path = './Maths_Datasets/pdf_vectorstore'
-vectorstore = load_vectorstore(vectorstore_path, allow_dangerous_deserialization=False)
+vectorstore = load_vectorstore(vectorstore_path, allow_dangerous_deserialization=True)
 retriever = vectorstore.as_retriever()
 
 #Custom Trained Tool on NCERT Maths Books:
