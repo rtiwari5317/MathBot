@@ -30,3 +30,9 @@ unstructured
 pytube
 numexpr
 huggingface_hub
+aiogram
+python-telegram-bot 
+langchain 
+faiss-cpu 
+sentence-transformers
+streamlit
